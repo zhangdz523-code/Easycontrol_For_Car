@@ -5,7 +5,7 @@ import android.os.Build;
 public final class Options {
     public static boolean isAudio = true;
     public static int maxSize = 1600;
-    public static int maxVideoBit = 4000000;
+    public static int maxVideoBit = 12000000;
     public static int maxFps = 60;
     public static int displayId = 0;
     public static boolean keepAwake = true;

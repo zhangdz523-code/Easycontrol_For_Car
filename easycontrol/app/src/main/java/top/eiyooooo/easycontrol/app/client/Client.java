@@ -160,7 +160,7 @@ public class Client {
     if (!device.isAudio) cmd.append(" isAudio=0");
     if (device.maxSize != 1600) cmd.append(" maxSize=").append(device.maxSize);
     if (device.maxFps != 60) cmd.append(" maxFps=").append(device.maxFps);
-    if (device.maxVideoBit != 4) cmd.append(" maxVideoBit=").append(device.maxVideoBit);
+    if (device.maxVideoBit != 12) cmd.append(" maxVideoBit=").append(device.maxVideoBit);
     if (displayId != 0) cmd.append(" displayId=").append(displayId);
     if (AppData.setting.getNewMirrorMode()) cmd.append(" mirrorMode=1");
     if (!AppData.setting.getKeepAwake()) cmd.append(" keepAwake=0");

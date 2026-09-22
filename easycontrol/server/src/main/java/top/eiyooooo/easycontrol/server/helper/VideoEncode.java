@@ -60,9 +60,7 @@ public final class VideoEncode {
 
         encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, Options.maxVideoBit);
         encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, Options.maxFps);
-        encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            encoderFormat.setInteger(MediaFormat.KEY_INTRA_REFRESH_PERIOD, Options.maxFps * 3);
+        encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2);
         encoderFormat.setFloat("max-fps-to-encoder", Options.maxFps);
 
         encoderFormat.setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 50_000);

@@ -44,7 +44,7 @@ public final class Setting {
   }
 
   public int getDefaultMaxVideoBit() {
-    return sharedPreferences.getInt("defaultMaxVideoBit", 4);
+    return sharedPreferences.getInt("defaultMaxVideoBit", 12);
   }
 
   public void setDefaultMaxVideoBit(int value) {
@@ -202,6 +202,15 @@ public final class Setting {
 
   public void setFillFull(boolean value) {
     editor.putBoolean("fillFull", value);
+    editor.apply();
+  }
+
+  public boolean getAutoSyncOrientation() {
+    return sharedPreferences.getBoolean("autoSyncOrientation", true);
+  }
+
+  public void setAutoSyncOrientation(boolean value) {
+    editor.putBoolean("autoSyncOrientation", value);
     editor.apply();
   }
 

@@ -114,6 +114,16 @@ public class ControlPacket {
     write.run(byteBuffer);
   }
 
+  // 发送锁定方向事件，lock=true 时保持锁定不被传感器覆盖
+  public void sendLockRotateEvent(int rotation, boolean lock) {
+    ByteBuffer byteBuffer = ByteBuffer.allocate(6);
+    byteBuffer.put((byte) 10);
+    byteBuffer.putInt(rotation);
+    byteBuffer.put((byte) (lock ? 1 : 0));
+    byteBuffer.flip();
+    write.run(byteBuffer);
+  }
+
   // 发送背光控制事件
   public void sendLightEvent(int mode) {
     write.run(ByteBuffer.wrap(new byte[]{7, (byte) mode}));

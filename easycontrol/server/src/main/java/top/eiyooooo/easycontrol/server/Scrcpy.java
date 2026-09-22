@@ -176,6 +176,9 @@ public final class Scrcpy {
                         if (Device.oldNightMode == -1) Device.oldNightMode = UiModeManager.getNightMode();
                         UiModeManager.setNightMode(inputStream.readByte());
                         break;
+                    case 10:
+                        Device.setDeviceRotation(inputStream.readInt(), inputStream.readByte() == 1);
+                        break;
                 }
             }
         } catch (Exception e) {
@@ -221,6 +224,7 @@ public final class Scrcpy {
         // 2
         VideoEncode.release();
         AudioEncode.release();
+        Device.releaseRotationLock();
 
         // 3
         if (Device.needReset) {

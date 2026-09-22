@@ -54,6 +54,14 @@ public class FullActivity extends Activity implements SensorEventListener {
     changeMode(-clientView.mode);
     // 页面自动旋转
     AppData.sensorManager.registerListener(this, AppData.sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+    // 进入时立即同步一次方向（车机已处于横屏时不会有传感器变化事件）
+    fullActivity.textureViewLayout.post(this::syncOrientationNow);
+  }
+
+  private void syncOrientationNow() {
+    if (!AppData.setting.getAutoSyncOrientation()) return;
+    DisplayMetrics metrics = getResources().getDisplayMetrics();
+    syncDeviceOrientation(metrics.widthPixels > metrics.heightPixels);
   }
 
   public Pair<Integer, Integer> fullMaxSize;
@@ -159,11 +167,12 @@ public class FullActivity extends Activity implements SensorEventListener {
       fullActivity.buttonLock.setImageResource(R.drawable.unlock);
       fullActivity.buttonLock.setOnClickListener(v -> PublicTools.logToast(getString(R.string.error_mode_not_support)));
       DisplayMetrics metrics = getResources().getDisplayMetrics();
-      int orientation;
-      if (metrics.widthPixels > metrics.heightPixels) orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-      else orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-      setRequestedOrientation(orientation);
+      int orientation = metrics.widthPixels > metrics.heightPixels
+              ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+              : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
       lastOrientation = orientation;
+      setRequestedOrientation(orientation);
+      syncDeviceOrientation(isLandscapeOrientation(orientation));
     } else {
       fullActivity.buttonLock.setOnClickListener(v -> {
         lockOrientation = !lockOrientation;
@@ -207,6 +216,25 @@ public class FullActivity extends Activity implements SensorEventListener {
   private boolean lockOrientation = false;
   private int lastOrientation = -1;
 
+  private boolean isLandscapeOrientation(int orientation) {
+    return orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            || orientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+  }
+
+  private void applyOrientation(int orientation) {
+    if (lastOrientation == orientation) return;
+    lastOrientation = orientation;
+    setRequestedOrientation(orientation);
+    syncDeviceOrientation(isLandscapeOrientation(orientation));
+  }
+
+  // 将主控端方向同步到被控端，避免车机横屏时手机画面仍是竖屏
+  private void syncDeviceOrientation(boolean landscape) {
+    if (clientView == null || !AppData.setting.getAutoSyncOrientation()) return;
+    // 传 Surface 旋转值：0=竖屏，1=横屏；锁定以不被被控端传感器覆盖
+    clientView.controlPacket.sendLockRotateEvent(landscape ? 1 : 0, true);
+  }
+
   @Override
   public void onSensorChanged(SensorEvent sensorEvent) {
     if (lockOrientation || Sensor.TYPE_ACCELEROMETER != sensorEvent.sensor.getType()) return;
@@ -220,10 +248,7 @@ public class FullActivity extends Activity implements SensorEventListener {
     else if (y > -3 && y < 3 && x <= -4.5) newOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
     else if (x > -3 && x < 3 && y <= -4.5) newOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 
-    if (lastOrientation != newOrientation) {
-      lastOrientation = newOrientation;
-      setRequestedOrientation(newOrientation);
-    }
+    applyOrientation(newOrientation);
   }
 
   @Override

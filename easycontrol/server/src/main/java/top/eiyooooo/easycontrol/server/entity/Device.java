@@ -240,6 +240,26 @@ public final class Device {
         if (accelerometerRotation) WindowManager.thawRotation(displayId);
     }
 
+    private static boolean rotationLocked = false;
+
+    // 设置被控端方向，lock 为 true 时保持锁定（不被传感器覆盖），false 则恢复自动旋转
+    public static void setDeviceRotation(int rotation, boolean lock) {
+        if (rotation == -1) rotation = (getCurrentRotation(displayId) & 1) ^ 1;
+        WindowManager.freezeRotation(displayId, rotation);
+        rotationLocked = lock;
+        if (!lock) WindowManager.thawRotation(displayId);
+    }
+
+    public static void releaseRotationLock() {
+        if (!rotationLocked) return;
+        try {
+            WindowManager.thawRotation(displayId);
+        } catch (Exception e) {
+            L.e("releaseRotationLock error", e);
+        }
+        rotationLocked = false;
+    }
+
     private static int getCurrentRotation(int displayId) {
         if (displayId == 0) {
             int currentRotation = WindowManager.getRotation();
