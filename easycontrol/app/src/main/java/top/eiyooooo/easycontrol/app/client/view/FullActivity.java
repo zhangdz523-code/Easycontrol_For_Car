@@ -2,6 +2,7 @@ package top.eiyooooo.easycontrol.app.client.view;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -211,6 +212,14 @@ public class FullActivity extends Activity implements SensorEventListener {
       }
     });
     barViewTimerThread.start();
+  }
+
+  // 车机系统方向变化时（系统级旋转，非加速度计），同步给被控端
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    if (lockOrientation) return;
+    syncDeviceOrientation(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
   }
 
   private boolean lockOrientation = false;
