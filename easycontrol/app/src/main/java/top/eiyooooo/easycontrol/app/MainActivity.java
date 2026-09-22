@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Toast;
 
 import java.util.UUID;
 
@@ -157,5 +159,63 @@ public class MainActivity extends Activity {
     mainActivity.buttonPair.setOnClickListener(v -> startActivity(new Intent(this, PairActivity.class)));
     mainActivity.buttonAdd.setOnClickListener(v -> PublicTools.createAddDeviceView(this, Device.getDefaultDevice(UUID.randomUUID().toString(), Device.TYPE_NORMAL), deviceListAdapter).show());
     mainActivity.buttonSet.setOnClickListener(v -> startActivity(new Intent(this, SetActivity.class)));
+    // 多选按钮
+    mainActivity.buttonMultiSelect.setOnClickListener(v -> enterMultiSelectMode());
+    mainActivity.buttonSelectAll.setOnClickListener(v -> {
+      if (deviceListAdapter.isAllSelected()) deviceListAdapter.deselectAll();
+      else deviceListAdapter.selectAll();
+      updateMultiSelectTitle();
+    });
+    mainActivity.buttonDeleteSelected.setOnClickListener(v -> {
+      int count = deviceListAdapter.getSelectedCount();
+      if (count == 0) {
+        Toast.makeText(this, getString(R.string.multi_select_empty), Toast.LENGTH_SHORT).show();
+        return;
+      }
+      android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+      builder.setMessage(getString(R.string.multi_select_confirm_delete, count));
+      builder.setPositiveButton(android.R.string.ok, (d, w) -> {
+        deviceListAdapter.deleteSelected();
+        exitMultiSelectMode();
+      });
+      builder.setNegativeButton(android.R.string.cancel, null);
+      builder.show();
+    });
+    mainActivity.buttonMultiSelectDone.setOnClickListener(v -> exitMultiSelectMode());
+  }
+
+  private void enterMultiSelectMode() {
+    deviceListAdapter.onSelectionChanged = this::updateMultiSelectTitle;
+    deviceListAdapter.enterMultiSelectMode();
+    mainActivity.multiSelectBar.setVisibility(View.VISIBLE);
+    mainActivity.buttonRefresh.setVisibility(View.GONE);
+    mainActivity.buttonPair.setVisibility(View.GONE);
+    mainActivity.buttonAdd.setVisibility(View.GONE);
+    mainActivity.buttonSet.setVisibility(View.GONE);
+    mainActivity.buttonMultiSelect.setVisibility(View.GONE);
+    mainActivity.mainSubtitle.setVisibility(View.GONE);
+    updateMultiSelectTitle();
+  }
+
+  private void exitMultiSelectMode() {
+    deviceListAdapter.onSelectionChanged = null;
+    deviceListAdapter.exitMultiSelectMode();
+    mainActivity.multiSelectBar.setVisibility(View.GONE);
+    mainActivity.buttonRefresh.setVisibility(View.VISIBLE);
+    mainActivity.buttonPair.setVisibility(View.VISIBLE);
+    mainActivity.buttonAdd.setVisibility(View.VISIBLE);
+    mainActivity.buttonSet.setVisibility(View.VISIBLE);
+    mainActivity.buttonMultiSelect.setVisibility(View.VISIBLE);
+    mainActivity.mainSubtitle.setVisibility(View.VISIBLE);
+    mainActivity.mainTitle.setText(R.string.app_name);
+  }
+
+  private void updateMultiSelectTitle() {
+    int count = deviceListAdapter.getSelectedCount();
+    mainActivity.mainTitle.setText(getString(R.string.multi_select_title, count));
+    if (deviceListAdapter.isAllSelected())
+      mainActivity.buttonSelectAll.setText(R.string.multi_select_deselect_all);
+    else
+      mainActivity.buttonSelectAll.setText(R.string.multi_select_select_all);
   }
 }

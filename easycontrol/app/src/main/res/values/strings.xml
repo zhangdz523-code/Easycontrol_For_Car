@@ -165,6 +165,16 @@
   <string name="set_device_button_change">修改</string>
   <string name="set_device_button_delete">删除</string>
 
+  <!-- 多选模式 -->
+  <string name="multi_select">多选</string>
+  <string name="multi_select_title">已选 %1$d 项</string>
+  <string name="multi_select_select_all">全选</string>
+  <string name="multi_select_deselect_all">取消全选</string>
+  <string name="multi_select_delete">删除选中</string>
+  <string name="multi_select_done">完成</string>
+  <string name="multi_select_confirm_delete">确定删除选中的 %1$d 个设备？</string>
+  <string name="multi_select_empty">未选择任何设备</string>
+
   <!-- 加载中模块 -->
   <string name="loading_text">加加加加载中</string>
 

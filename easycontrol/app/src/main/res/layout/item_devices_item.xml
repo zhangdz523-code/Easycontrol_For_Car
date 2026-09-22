@@ -12,6 +12,15 @@
   android:paddingEnd="12dp"
   android:paddingBottom="10dp">
 
+  <CheckBox
+    android:id="@+id/device_checkbox"
+    android:layout_width="26dp"
+    android:layout_height="26dp"
+    android:clickable="false"
+    android:focusable="false"
+    android:buttonTint="@color/onCardBackground"
+    android:visibility="gone" />
+
   <ImageView
     android:id="@+id/device_icon"
     android:layout_width="26dp"

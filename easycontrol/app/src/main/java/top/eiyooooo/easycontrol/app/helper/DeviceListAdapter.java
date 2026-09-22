@@ -16,7 +16,9 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +40,10 @@ public class DeviceListAdapter extends BaseExpandableListAdapter {
   private final Context context;
   private final ExpandableListView expandableListView;
   public static boolean startedDefault = false;
+
+  private boolean multiSelectMode = false;
+  private final Set<String> selectedUuids = new HashSet<>();
+  public Runnable onSelectionChanged;;
 
 
   public DeviceListAdapter(Context c, ExpandableListView expandableListView) {
@@ -118,6 +124,15 @@ public class DeviceListAdapter extends BaseExpandableListAdapter {
     ItemDevicesItemBinding devicesItemBinding = (ItemDevicesItemBinding) view.getTag();
     // 设置展开图标
     devicesItemBinding.deviceExpand.setRotation(isExpanded ? 270 : 180);
+    // 多选模式
+    if (multiSelectMode) {
+      devicesItemBinding.deviceCheckbox.setVisibility(View.VISIBLE);
+      devicesItemBinding.deviceExpand.setVisibility(View.GONE);
+      devicesItemBinding.deviceCheckbox.setChecked(selectedUuids.contains(device.uuid));
+    } else {
+      devicesItemBinding.deviceCheckbox.setVisibility(View.GONE);
+      devicesItemBinding.deviceExpand.setVisibility(View.VISIBLE);
+    }
     // 设置卡片值
     if (device.isLinkDevice()) {
       if (device.connection == 1)
@@ -136,13 +151,21 @@ public class DeviceListAdapter extends BaseExpandableListAdapter {
     devicesItemBinding.deviceName.setText(device.name);
     // 单击事件
     devicesItemBinding.getRoot().setOnClickListener(v -> {
-      if (expandableListView.isGroupExpanded(groupPosition))
-        expandableListView.collapseGroup(groupPosition);
-      else
-        expandableListView.expandGroup(groupPosition);
+      if (multiSelectMode) {
+        toggleSelection(device);
+      } else {
+        if (expandableListView.isGroupExpanded(groupPosition))
+          expandableListView.collapseGroup(groupPosition);
+        else
+          expandableListView.expandGroup(groupPosition);
+      }
     });
     // 长按事件
     devicesItemBinding.getRoot().setOnLongClickListener(v -> {
+      if (multiSelectMode) {
+        toggleSelection(device);
+        return true;
+      }
       onLongClickCard(device);
       return true;
     });
@@ -293,6 +316,70 @@ public class DeviceListAdapter extends BaseExpandableListAdapter {
       dialog.cancel();
     });
     dialog.show();
+  }
+
+  // ===== 多选模式 =====
+
+  public void enterMultiSelectMode() {
+    multiSelectMode = true;
+    selectedUuids.clear();
+    for (int i = 0; i < devicesList.size(); i++)
+      expandableListView.collapseGroup(i);
+    notifyDataSetChanged();
+  }
+
+  public void exitMultiSelectMode() {
+    multiSelectMode = false;
+    selectedUuids.clear();
+    notifyDataSetChanged();
+  }
+
+  private void toggleSelection(Device device) {
+    if (selectedUuids.contains(device.uuid))
+      selectedUuids.remove(device.uuid);
+    else
+      selectedUuids.add(device.uuid);
+    notifyDataSetChanged();
+    if (onSelectionChanged != null) onSelectionChanged.run();
+  }
+
+  public void selectAll() {
+    selectedUuids.clear();
+    for (Device device : devicesList)
+      selectedUuids.add(device.uuid);
+    notifyDataSetChanged();
+    if (onSelectionChanged != null) onSelectionChanged.run();
+  }
+
+  public void deselectAll() {
+    selectedUuids.clear();
+    notifyDataSetChanged();
+    if (onSelectionChanged != null) onSelectionChanged.run();
+  }
+
+  public boolean isAllSelected() {
+    return !devicesList.isEmpty() && selectedUuids.size() == devicesList.size();
+  }
+
+  public int getSelectedCount() {
+    return selectedUuids.size();
+  }
+
+  public boolean isMultiSelectMode() {
+    return multiSelectMode;
+  }
+
+  public void deleteSelected() {
+    for (Device device : new ArrayList<>(devicesList)) {
+      if (selectedUuids.contains(device.uuid)) {
+        AppData.dbHelper.delete(device);
+        if (Adb.adbMap.containsKey(device.uuid)) {
+          Objects.requireNonNull(Adb.adbMap.get(device.uuid)).close();
+        }
+      }
+    }
+    exitMultiSelectMode();
+    update();
   }
 
   private void queryDevices() {
